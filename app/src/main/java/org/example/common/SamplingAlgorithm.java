@@ -4,5 +4,6 @@ package org.example.common;
 public enum SamplingAlgorithm {
     YASA,
     ICPL,
-    CHVATAL
+    CHVATAL,
+    UNIFORM,
 }

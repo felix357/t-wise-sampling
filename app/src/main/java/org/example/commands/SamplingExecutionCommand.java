@@ -25,7 +25,7 @@ public class SamplingExecutionCommand implements Callable<Integer> {
 
     // Sampling algorithm option
     @Option(names = { "-s",
-            "--sampling-algorithm" }, description = "The sampling algorithm to use (YASA, ICPL, Chvatal).", required = true)
+            "--sampling-algorithm" }, description = "The sampling algorithm to use (YASA, UNIFORM, ICPL, Chvatal).", required = true)
     private SamplingAlgorithm algorithm;
 
     @Override

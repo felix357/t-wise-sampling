@@ -4,6 +4,8 @@
 package org.example;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 import org.example.commands.SamplingExecutionCommand;
 import org.example.common.SamplingAlgorithm;
@@ -12,6 +14,7 @@ import org.example.common.TWiseCalculator;
 import org.example.out.ResultWriter;
 import org.example.parsing.FeatureModelParser;
 
+import de.featjar.analysis.ddnnife.solver.DdnnifeWrapper;
 import de.featjar.analysis.sat4j.computation.ComputeCoreDeadMIG;
 import de.featjar.analysis.sat4j.computation.ComputeCoreSAT4J;
 import de.featjar.analysis.sat4j.computation.YASA;
@@ -20,7 +23,9 @@ import de.featjar.base.computation.Computations;
 import de.featjar.base.computation.IComputation;
 import de.featjar.base.data.Pair;
 import de.featjar.formula.VariableMap;
+import de.featjar.formula.assignment.ABooleanAssignment;
 import de.featjar.formula.assignment.BooleanAssignment;
+import de.featjar.formula.assignment.BooleanAssignmentGroups;
 import de.featjar.formula.assignment.BooleanClauseList;
 import de.featjar.formula.assignment.BooleanSolutionList;
 import de.featjar.formula.assignment.ComputeBooleanClauseList;
@@ -67,6 +72,20 @@ public class SamplingAnalyzer {
         if (samplingConfig.getSamplingAlgorithm() == SamplingAlgorithm.YASA) {
             YASA yasa = new YASA(clauseListComputation);
             sample = yasa.compute();
+        } else if (samplingConfig.getSamplingAlgorithm() == SamplingAlgorithm.UNIFORM) {
+            List<List<ABooleanAssignment>> assignmentGroups = Arrays.asList(
+                    Arrays.asList(core));
+
+            BooleanAssignmentGroups booleanAssignmentGroups = new BooleanAssignmentGroups(variables,
+                    assignmentGroups);
+
+            try (
+                    DdnnifeWrapper solver = new DdnnifeWrapper(booleanAssignmentGroups)) {
+
+                sample = solver.getRandomSolutions(9, 321L).get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         CoverageStatistic coverageStatistic = TWiseCalculator.computeTWiseStatistics(booleanClauseList, core, sample,

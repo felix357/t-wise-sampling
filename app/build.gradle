@@ -33,7 +33,7 @@ dependencies {
 
     implementation name: 'formula-analysis-sat4j-0.1.1-SNAPSHOT', ext: 'jar'
 
-    // formula-analysis-sat4j-0.1.1-SNAPSHOT-all
+    implementation name: 'formula-analysis-ddnnife-0.1.0-SNAPSHOT', ext: 'jar'
 
     // https://mvnrepository.com/artifact/org.ow2.sat4j/org.ow2.sat4j.core
     implementation group: 'org.ow2.sat4j', name: 'org.ow2.sat4j.core', version: '2.3.6'
