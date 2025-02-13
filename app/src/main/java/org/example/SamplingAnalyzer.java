@@ -26,6 +26,7 @@ import de.featjar.formula.VariableMap;
 import de.featjar.formula.assignment.ABooleanAssignment;
 import de.featjar.formula.assignment.BooleanAssignment;
 import de.featjar.formula.assignment.BooleanAssignmentGroups;
+import de.featjar.formula.assignment.BooleanAssignmentList;
 import de.featjar.formula.assignment.BooleanClauseList;
 import de.featjar.formula.assignment.BooleanSolutionList;
 import de.featjar.formula.assignment.ComputeBooleanClauseList;
@@ -82,7 +83,9 @@ public class SamplingAnalyzer {
             try (
                     DdnnifeWrapper solver = new DdnnifeWrapper(booleanAssignmentGroups)) {
 
-                sample = solver.getRandomSolutions(9, 321L).get();
+                BooleanAssignmentList a = solver.getSolutions(2).get();
+                BooleanAssignmentList s = solver.getRandomSolutions(2, 321L).get();
+                sample = s.toSolutionList();
             } catch (Exception e) {
                 e.printStackTrace();
             }
