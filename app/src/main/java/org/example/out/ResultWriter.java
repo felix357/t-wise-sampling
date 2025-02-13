@@ -11,15 +11,14 @@ import org.example.common.SamplingAlgorithm;
 import de.featjar.analysis.sat4j.twise.CoverageStatistic;
 import de.featjar.formula.VariableMap;
 import de.featjar.formula.assignment.BooleanAssignment;
-import de.featjar.formula.assignment.BooleanClauseList;
-import de.featjar.formula.assignment.BooleanSolution;
-import de.featjar.formula.assignment.BooleanSolutionList;
+import de.featjar.formula.assignment.BooleanAssignmentList;
 
 public class ResultWriter {
 
+    // TODO: Ziehe die ungültigen Features von den nie abgedeckten Features ab.
+    // Zeige alle einmal abgedeckten Features.
     public static boolean writeResultToFile(File outputDir, BooleanAssignment coreAndDeadFeatures,
-            BooleanSolutionList sample,
-            BooleanClauseList booleanClauseList, int t, SamplingAlgorithm samplingAlgorithm,
+            BooleanAssignmentList sample, int t, SamplingAlgorithm samplingAlgorithm,
             CoverageStatistic coverageStatistic,
             VariableMap variableMap) {
 
@@ -38,7 +37,7 @@ public class ResultWriter {
 
             int numberOfSamples = sample.size();
 
-            writer.write("\nNumber of Samples: " + numberOfSamples);
+            writer.write("\nNumber of Configurations: " + numberOfSamples);
 
             ArrayList<Integer> features = getFeatures(sample);
 
@@ -69,7 +68,7 @@ public class ResultWriter {
     }
 
     private static HashMap<String, Integer> determineEntriesT2(ArrayList<Integer> features,
-            BooleanSolutionList sample, boolean considerInvalidFeatureInteractions) {
+            BooleanAssignmentList sample, boolean considerInvalidFeatureInteractions) {
         HashMap<String, Integer> entries = new HashMap<>();
 
         for (int i = 0; i < features.size(); i++) {
@@ -101,9 +100,9 @@ public class ResultWriter {
     }
 
     // Hilfsmethode: Prüft, ob eine Kombination as features in Sample vorkommt
-    private static boolean combinationExistsInSample(BooleanSolutionList sample, int feature1,
+    private static boolean combinationExistsInSample(BooleanAssignmentList sample, int feature1,
             int feature2) {
-        for (BooleanSolution configuration : sample) {
+        for (BooleanAssignment configuration : sample) {
             if (configuration.contains(feature1) && configuration.contains(feature2)) {
                 return true;
             }
@@ -129,9 +128,9 @@ public class ResultWriter {
         writer.write(sb.toString());
     }
 
-    private static void updateEntriesWithNumberOfSolutions(BooleanSolutionList sample,
+    private static void updateEntriesWithNumberOfSolutions(BooleanAssignmentList sample,
             HashMap<String, Integer> entries) {
-        for (BooleanSolution config : sample) {
+        for (BooleanAssignment config : sample) {
             for (int i = 0; i < config.size(); i++) {
                 for (int j = i + 1; j < config.size(); j++) {
                     String key = config.get(i) + "," + config.get(j);
@@ -141,7 +140,7 @@ public class ResultWriter {
         }
     }
 
-    private static ArrayList<Integer> getFeatures(BooleanSolutionList booleanSolutionList) {
+    private static ArrayList<Integer> getFeatures(BooleanAssignmentList booleanSolutionList) {
         int[] features = booleanSolutionList.getAll().get(0).getAbsoluteValues();
 
         ArrayList<Integer> relevantFeatures = new ArrayList<>();

@@ -31,7 +31,7 @@ dependencies {
     implementation 'info.picocli:picocli:4.7.6'
     annotationProcessor 'info.picocli:picocli-codegen:4.7.6'
 
-    implementation name: 'formula-analysis-sat4j-0.1.1-SNAPSHOT', ext: 'jar'
+    implementation name: '2formula-analysis-sat4j-0.1.1-SNAPSHOT', ext: 'jar'
 
     implementation name: 'formula-analysis-ddnnife-0.1.0-SNAPSHOT', ext: 'jar'
 
@@ -45,7 +45,7 @@ dependencies {
 
     //implementation name: 'formula-analysis-sat4j-0.1.1-SNAPSHOT-all', ext: 'jar'
 
-    implementation name: 'formula-0.1.1-SNAPSHOT', ext: 'jar'
+    implementation name: '2formula-0.1.1-SNAPSHOT', ext: 'jar'
 
     implementation name: 'base-0.1.2-SNAPSHOT', ext: 'jar'
     

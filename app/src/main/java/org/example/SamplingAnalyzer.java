@@ -4,8 +4,8 @@
 package org.example;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.example.commands.SamplingExecutionCommand;
 import org.example.common.SamplingAlgorithm;
@@ -21,14 +21,10 @@ import de.featjar.analysis.sat4j.computation.YASA;
 import de.featjar.analysis.sat4j.twise.CoverageStatistic;
 import de.featjar.base.computation.Computations;
 import de.featjar.base.computation.IComputation;
-import de.featjar.base.data.Pair;
 import de.featjar.formula.VariableMap;
-import de.featjar.formula.assignment.ABooleanAssignment;
 import de.featjar.formula.assignment.BooleanAssignment;
 import de.featjar.formula.assignment.BooleanAssignmentGroups;
 import de.featjar.formula.assignment.BooleanAssignmentList;
-import de.featjar.formula.assignment.BooleanClauseList;
-import de.featjar.formula.assignment.BooleanSolutionList;
 import de.featjar.formula.assignment.ComputeBooleanClauseList;
 import de.featjar.formula.computation.ComputeCNFFormula;
 import de.featjar.formula.computation.ComputeNNFFormula;
@@ -54,47 +50,43 @@ public class SamplingAnalyzer {
 
         IFormula formula = FeatureModelParser.convertXMLToFormula(input_file_name);
 
-        ComputeBooleanClauseList cnf = Computations.of(formula)
-                .map(ComputeNNFFormula::new)
-                .map(ComputeCNFFormula::new)
-                .set(ComputeCNFFormula.IS_PLAISTED_GREENBAUM, Boolean.TRUE)
-                .map(ComputeBooleanClauseList::new);
+        ComputeBooleanClauseList cnf = Computations.of(formula).map(ComputeNNFFormula::new).map(ComputeCNFFormula::new)
+                .set(ComputeCNFFormula.IS_PLAISTED_GREENBAUM, Boolean.TRUE).map(ComputeBooleanClauseList::new);
 
-        Pair<BooleanClauseList, VariableMap> computedCNF = cnf.compute();
-        BooleanClauseList booleanClauseList = computedCNF.getKey();
-        VariableMap variables = computedCNF.getValue();
+        BooleanAssignmentList computedCNF = cnf.compute();
+        VariableMap variables = computedCNF.getVariableMap();
 
-        IComputation<BooleanClauseList> clauseListComputation = Computations.of(booleanClauseList);
-        BooleanAssignment core = clauseListComputation.map(ComputeCoreSAT4J::new).compute();
-        BooleanAssignment coreAndDeadFeatures = clauseListComputation.map(ComputeCoreDeadMIG::new).compute();
+        IComputation<BooleanAssignmentList> booleanAssignmentListComputation = Computations.of(computedCNF);
+        BooleanAssignment core = booleanAssignmentListComputation.map(ComputeCoreSAT4J::new).compute();
+        BooleanAssignment coreAndDeadFeatures = booleanAssignmentListComputation.map(ComputeCoreDeadMIG::new).compute();
 
-        BooleanSolutionList sample = null;
+        BooleanAssignmentList sample = null;
 
         if (samplingConfig.getSamplingAlgorithm() == SamplingAlgorithm.YASA) {
-            YASA yasa = new YASA(clauseListComputation);
+            YASA yasa = new YASA(booleanAssignmentListComputation);
             sample = yasa.compute();
         } else if (samplingConfig.getSamplingAlgorithm() == SamplingAlgorithm.UNIFORM) {
-            List<List<ABooleanAssignment>> assignmentGroups = Arrays.asList(
-                    Arrays.asList(core));
+            BooleanAssignmentGroups booleanAssignmentGroups = new BooleanAssignmentGroups(computedCNF);
 
-            BooleanAssignmentGroups booleanAssignmentGroups = new BooleanAssignmentGroups(variables,
-                    assignmentGroups);
+            try (DdnnifeWrapper solver = new DdnnifeWrapper(booleanAssignmentGroups)) {
+                Random random = new Random();
+                Long seed = random.nextLong(Long.MAX_VALUE);
 
-            try (
-                    DdnnifeWrapper solver = new DdnnifeWrapper(booleanAssignmentGroups)) {
-
-                BooleanAssignmentList a = solver.getSolutions(2).get();
-                BooleanAssignmentList s = solver.getRandomSolutions(2, 321L).get();
-                sample = s.toSolutionList();
+                sample = solver.getRandomSolutions(10, seed).get();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        CoverageStatistic coverageStatistic = TWiseCalculator.computeTWiseStatistics(booleanClauseList, core, sample,
+        CoverageStatistic coverageStatistic = TWiseCalculator.computeTWiseStatistics(computedCNF, core, sample,
                 samplingConfig.getT());
 
-        ResultWriter.writeResultToFile(outputDir, coreAndDeadFeatures, sample, booleanClauseList, samplingConfig.getT(),
+        Long a = TWiseCalculator.computeTWiseCount(sample, 2, new BooleanAssignment(new int[] {}), computedCNF,
+                List.of());
+
+        System.out.println("covered: " + a);
+
+        ResultWriter.writeResultToFile(outputDir, coreAndDeadFeatures, sample, samplingConfig.getT(),
                 samplingConfig.getSamplingAlgorithm(), coverageStatistic, variables);
 
         System.exit(exitCode);
